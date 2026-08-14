@@ -3,6 +3,7 @@ import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { createId } from "../utils/storage";
+import ProjectSelector from "../components/ProjectSelector";
 
 const initialTask = {
   title: "",
@@ -33,6 +34,8 @@ function TaskManagement({
     "taskflow_projects",
     []
   );
+
+  const [selectedProject] = useLocalStorage("taskflow_selected_project", "");
 
   const [localSidebarOpen, setLocalSidebarOpen] = useState(false);
   const activeState = activeMenu || "Task Management";
@@ -161,6 +164,7 @@ function TaskManagement({
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
+      if (selectedProject && task.project !== selectedProject) return false;
       const keyword =
         search.toLowerCase();
 
@@ -301,6 +305,8 @@ function TaskManagement({
             </button>
 
           </div>
+
+          <ProjectSelector projects={projects} />
 
           {/* STATISTICS */}
 

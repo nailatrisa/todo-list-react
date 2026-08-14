@@ -9,13 +9,13 @@ function TeamManagement({ user, onLogout, onNavigate, activeMenu, sidebarOpen, s
   const activeState = activeMenu || "Team Management";
 
   const [teamMembers, setTeamMembers] = useLocalStorage("taskflow_team", [
-    { id: createId(), name: "Alya", role: "Product Lead", focus: "Strategy" },
-    { id: createId(), name: "Rian", role: "Developer", focus: "Frontend" },
-    { id: createId(), name: "Nadia", role: "Designer", focus: "UI/UX" },
-    { id: createId(), name: "Doni", role: "QA", focus: "Testing" },
+    { id: createId(), name: "Alya", role: "Product Lead", focus: "Strategy", email: "alya@company.com", department: "Product", position: "Lead", status: "Active", projects: ["Website Sekolah"] },
+    { id: createId(), name: "Rian", role: "Developer", focus: "Frontend", email: "rian@company.com", department: "Engineering", position: "Frontend Dev", status: "Active", projects: ["Website Sekolah"] },
+    { id: createId(), name: "Nadia", role: "Designer", focus: "UI/UX", email: "nadia@company.com", department: "Design", position: "UI/UX", status: "Active", projects: ["Website Sekolah"] },
+    { id: createId(), name: "Doni", role: "QA", focus: "Testing", email: "doni@company.com", department: "Quality", position: "QA", status: "Active", projects: ["Website Sekolah"] },
   ]);
 
-  const [newMember, setNewMember] = useState({ name: "", role: "Member", focus: "" });
+  const [newMember, setNewMember] = useState({ name: "", role: "Member", focus: "", email: "", department: "", position: "", status: "Active", projects: [] });
 
   const teamMembersWithWorkload = useMemo(() => {
     return teamMembers.map((member) => ({
@@ -23,6 +23,12 @@ function TeamManagement({ user, onLogout, onNavigate, activeMenu, sidebarOpen, s
       workload: tasks.filter((task) => (task.assignee || "").toLowerCase() === member.name.toLowerCase()).length,
     }));
   }, [teamMembers, tasks]);
+
+  const [selectedProject] = useLocalStorage("taskflow_selected_project", "");
+
+  const filteredByProject = selectedProject
+    ? teamMembersWithWorkload.filter((m) => (m.projects || []).includes(selectedProject))
+    : teamMembersWithWorkload;
 
   const handleAddMember = (e) => {
     e.preventDefault();
@@ -77,45 +83,68 @@ function TeamManagement({ user, onLogout, onNavigate, activeMenu, sidebarOpen, s
           </div>
 
           <div className="mb-6 rounded-2xl border border-white/[0.07] bg-white/[0.015] p-4">
-            <form onSubmit={handleAddMember} className="grid gap-3 sm:grid-cols-3">
-              <input
-                value={newMember.name}
-                onChange={(e) => setNewMember((s) => ({ ...s, name: e.target.value }))}
-                placeholder="Nama anggota"
-                className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-xs text-white outline-none"
-              />
-
-              <select
-                value={newMember.role}
-                onChange={(e) => setNewMember((s) => ({ ...s, role: e.target.value }))}
-                className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-xs text-white outline-none"
-              >
-                <option>Member</option>
-                <option>Manager</option>
-                <option>Admin</option>
-                <option>Product Lead</option>
-                <option>Developer</option>
-                <option>Designer</option>
-                <option>QA</option>
-              </select>
-
-              <div className="flex items-center gap-2">
+            <form onSubmit={handleAddMember} className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-3">
                 <input
-                  value={newMember.focus}
-                  onChange={(e) => setNewMember((s) => ({ ...s, focus: e.target.value }))}
-                  placeholder="Focus / specialization"
-                  className="flex-1 rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-xs text-white outline-none"
+                  value={newMember.name}
+                  onChange={(e) => setNewMember((s) => ({ ...s, name: e.target.value }))}
+                  placeholder="Nama anggota"
+                  className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-xs text-white outline-none"
                 />
 
+                <input
+                  value={newMember.email}
+                  onChange={(e) => setNewMember((s) => ({ ...s, email: e.target.value }))}
+                  placeholder="Email"
+                  className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-xs text-white outline-none"
+                />
+
+                <select
+                  value={newMember.role}
+                  onChange={(e) => setNewMember((s) => ({ ...s, role: e.target.value }))}
+                  className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-xs text-white outline-none"
+                >
+                  <option>Member</option>
+                  <option>Manager</option>
+                  <option>Admin</option>
+                </select>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <input
+                  value={newMember.department}
+                  onChange={(e) => setNewMember((s) => ({ ...s, department: e.target.value }))}
+                  placeholder="Department"
+                  className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-xs text-white outline-none"
+                />
+
+                <input
+                  value={newMember.position}
+                  onChange={(e) => setNewMember((s) => ({ ...s, position: e.target.value }))}
+                  placeholder="Position"
+                  className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-xs text-white outline-none"
+                />
+
+                <select
+                  value={newMember.status}
+                  onChange={(e) => setNewMember((s) => ({ ...s, status: e.target.value }))}
+                  className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-xs text-white outline-none"
+                >
+                  <option>Active</option>
+                  <option>Inactive</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end">
                 <button className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold hover:bg-indigo-500">
-                  Add
+                  Add Member
                 </button>
               </div>
             </form>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {teamMembersWithWorkload.map((member) => (
+            {filteredByProject.map((member) => (
               <div key={member.id} className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
                 <div className="flex items-center justify-between">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/10 text-sm font-bold text-indigo-400">

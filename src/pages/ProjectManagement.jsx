@@ -3,6 +3,7 @@ import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { createId } from "../utils/storage";
+import ProjectSelector from "../components/ProjectSelector";
 
 const emptyProject = {
   name: "",
@@ -170,13 +171,17 @@ function ProjectManagement({
               </p>
             </div>
 
-            <button
-              onClick={openCreateForm}
-              className="rounded-xl bg-indigo-600 px-5 py-3 text-xs font-semibold transition hover:bg-indigo-500"
-            >
-              + New Project
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={openCreateForm}
+                className="rounded-xl bg-indigo-600 px-5 py-3 text-xs font-semibold transition hover:bg-indigo-500"
+              >
+                + New Project
+              </button>
+            </div>
           </div>
+
+          <ProjectSelector projects={projects} />
 
           {/* SEARCH */}
           <div className="mb-6">
