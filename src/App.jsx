@@ -41,6 +41,45 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const roleAccess = {
+    Admin: null, // full access
+    Manager: [
+      "Dashboard",
+      "Todo",
+      "Task Management",
+      "Project Management",
+      "My Tasks",
+      "Team Management",
+      "Milestone",
+      "Checklist",
+      "Search",
+      "Role & Permission",
+      "Settings",
+      "Kanban Board",
+      "Calendar",
+      "Notifications",
+      "Analytics",
+    ],
+    Member: [
+      "Dashboard",
+      "Todo",
+      "My Tasks",
+      "Checklist",
+      "Search",
+      "Kanban Board",
+      "Calendar",
+      "Notifications",
+    ],
+  };
+
+  const effectiveMenu = (() => {
+    if (!user) return activeMenu;
+    const role = user.role || "Member";
+    if (role === "Admin") return activeMenu;
+    const allowed = roleAccess[role] || [];
+    return allowed.includes(activeMenu) ? activeMenu : "Dashboard";
+  })();
+
   const handleLogin = (loggedInUser) => {
     setUser(loggedInUser);
     setActiveMenu("Dashboard");
@@ -75,7 +114,7 @@ function App() {
     return <Login onLogin={handleLogin} />;
   }
 
-  switch (activeMenu) {
+  switch (effectiveMenu) {
     case "Todo":
       return (
         <Todo

@@ -3,8 +3,21 @@ import Topbar from "../components/Topbar";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { STORAGE_KEYS } from "../utils/storage";
 
-function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSidebarOpen, onSearch, searchQuery }) {
+function Dashboard({
+  user,
+  onLogout,
+  onNavigate,
+  activeMenu,
+  sidebarOpen,
+  setSidebarOpen,
+  onSearch,
+  searchQuery,
+}) {
   const [todos] = useLocalStorage(STORAGE_KEYS.TODOS, []);
+
+  // =========================
+  // TODO STATISTICS
+  // =========================
 
   const total = todos.length;
 
@@ -22,10 +35,23 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
     return new Date(todo.deadline) < new Date();
   }).length;
 
+  // =========================
+  // PROJECT PROGRESS
+  // =========================
+
   const progress =
     total > 0
       ? Math.round((completed / total) * 100)
       : 0;
+
+  // =========================
+  // DASHBOARD STATISTICS
+  // URUTAN:
+  // TOTAL
+  // IN PROGRESS
+  // COMPLETED
+  // OVERDUE
+  // =========================
 
   const stats = [
     {
@@ -36,18 +62,18 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
       className: "text-indigo-400",
     },
     {
-      title: "COMPLETED",
-      value: completed,
-      icon: "✓",
-      description: "Task selesai",
-      className: "text-emerald-400",
-    },
-    {
       title: "IN PROGRESS",
       value: inProgress,
       icon: "◷",
       description: "Sedang dikerjakan",
       className: "text-amber-400",
+    },
+    {
+      title: "COMPLETED",
+      value: completed,
+      icon: "✓",
+      description: "Task selesai",
+      className: "text-emerald-400",
     },
     {
       title: "OVERDUE",
@@ -61,6 +87,10 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
   return (
     <div className="min-h-screen bg-[#080b16] text-white">
 
+      {/* =========================
+          SIDEBAR
+      ========================= */}
+
       <Sidebar
         user={user}
         activeMenu={activeMenu}
@@ -71,7 +101,15 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
         onNavigate={onNavigate}
       />
 
+      {/* =========================
+          MAIN CONTENT
+      ========================= */}
+
       <div className="lg:ml-[270px]">
+
+        {/* =========================
+            TOPBAR
+        ========================= */}
 
         <Topbar
           user={user}
@@ -85,7 +123,9 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
 
         <main className="p-4 sm:p-6 lg:p-8">
 
-          {/* HEADER */}
+          {/* =========================
+              HEADER
+          ========================= */}
 
           <div className="mb-8">
 
@@ -103,7 +143,15 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
 
           </div>
 
-          {/* STATS */}
+          {/* =========================
+              STATS CARDS
+              
+              URUTAN:
+              1. TOTAL TASK
+              2. IN PROGRESS
+              3. COMPLETED
+              4. OVERDUE
+          ========================= */}
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
@@ -146,11 +194,15 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
 
           </div>
 
-          {/* MAIN GRID */}
+          {/* =========================
+              MAIN GRID
+          ========================= */}
 
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
 
-            {/* PROJECT PROGRESS */}
+            {/* =========================
+                PROJECT PROGRESS
+            ========================= */}
 
             <div className="rounded-2xl border border-white/[0.07] bg-[#0d1220] p-6 xl:col-span-2">
 
@@ -174,6 +226,8 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
 
               </div>
 
+              {/* Progress Bar */}
+
               <div className="mt-6 h-3 overflow-hidden rounded-full bg-white/[0.05]">
 
                 <div
@@ -184,6 +238,8 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
                 />
 
               </div>
+
+              {/* Progress Details */}
 
               <div className="mt-6 grid grid-cols-3 gap-4">
 
@@ -209,7 +265,9 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
 
             </div>
 
-            {/* TASK DISTRIBUTION */}
+            {/* =========================
+                TASK DISTRIBUTION
+            ========================= */}
 
             <div className="rounded-2xl border border-white/[0.07] bg-[#0d1220] p-6">
 
@@ -223,6 +281,8 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
 
               <div className="mt-6 space-y-5">
 
+                {/* Completed */}
+
                 <Distribution
                   label="Completed"
                   value={completed}
@@ -230,12 +290,16 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
                   className="bg-emerald-400"
                 />
 
+                {/* In Progress */}
+
                 <Distribution
                   label="In Progress"
                   value={inProgress}
                   total={total}
                   className="bg-amber-400"
                 />
+
+                {/* Overdue */}
 
                 <Distribution
                   label="Overdue"
@@ -250,7 +314,9 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
 
           </div>
 
-          {/* QUICK ACTIONS */}
+          {/* =========================
+              QUICK ACTIONS
+          ========================= */}
 
           <div className="mt-6 rounded-2xl border border-white/[0.07] bg-[#0d1220] p-6">
 
@@ -268,17 +334,23 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 
+              {/* Create Todo */}
+
               <ActionButton
                 icon="+"
                 title="Create Todo"
                 onClick={() => onNavigate("Todo")}
               />
 
+              {/* My Tasks */}
+
               <ActionButton
                 icon="✓"
                 title="My Tasks"
                 onClick={() => onNavigate("My Tasks")}
               />
+
+              {/* Task Management */}
 
               <ActionButton
                 icon="◈"
@@ -287,6 +359,8 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
                   onNavigate("Task Management")
                 }
               />
+
+              {/* Projects */}
 
               <ActionButton
                 icon="▦"
@@ -308,6 +382,10 @@ function Dashboard({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSid
   );
 }
 
+/* =====================================================
+   PROGRESS ITEM
+===================================================== */
+
 function ProgressItem({
   label,
   value,
@@ -320,13 +398,19 @@ function ProgressItem({
         {label}
       </p>
 
-      <p className={`mt-1 text-xl font-bold ${className}`}>
+      <p
+        className={`mt-1 text-xl font-bold ${className}`}
+      >
         {value}
       </p>
 
     </div>
   );
 }
+
+/* =====================================================
+   DISTRIBUTION
+===================================================== */
 
 function Distribution({
   label,
@@ -368,6 +452,10 @@ function Distribution({
     </div>
   );
 }
+
+/* =====================================================
+   ACTION BUTTON
+===================================================== */
 
 function ActionButton({
   icon,
