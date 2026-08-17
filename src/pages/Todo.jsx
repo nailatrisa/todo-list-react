@@ -8,6 +8,7 @@ import {
   STORAGE_KEYS,
   createId,
 } from "../utils/storage";
+import ProjectSelector from "../components/ProjectSelector";
 
 function Todo({
   user,
@@ -39,6 +40,9 @@ function Todo({
 
   const [draggedId, setDraggedId] =
     useState(null);
+
+  const [selectedProject] = useLocalStorage("taskflow_selected_project", "");
+  const [view, setView] = useState("personal");
 
   /* =========================
      CREATE / UPDATE
@@ -72,6 +76,8 @@ function Todo({
       deadline: form.deadline,
       priority: form.priority,
       completed: false,
+      project: form.project || "",
+      createdBy: (user && user.email) || "",
       createdAt:
         new Date().toISOString(),
       updatedAt:
@@ -192,6 +198,19 @@ function Todo({
 
   const filteredTodos = useMemo(() => {
     return todos.filter((todo) => {
+      // Separate personal vs team view
+      if (view === "personal") {
+        if (todo.project) return false;
+        if (todo.createdBy !== (user && user.email)) return false;
+      }
+
+      if (view === "team") {
+        if (selectedProject) {
+          if (todo.project !== selectedProject) return false;
+        } else {
+          if (!todo.project) return false;
+        }
+      }
 
       const matchesSearch =
         todo.title
@@ -231,51 +250,29 @@ function Todo({
     });
   }, [todos, search, filter]);
 
-  /* =========================
-     STATISTICS
-  ========================= */
+  const personalAll = useMemo(() => {
+    return todos.filter((t) => !t.project && t.createdBy === (user && user.email));
+  }, [todos, user]);
+
+  const teamAll = useMemo(() => {
+    if (selectedProject) return todos.filter((t) => t.project === selectedProject);
+    return todos.filter((t) => !!t.project);
+  }, [todos, selectedProject]);
 
   const stats = useMemo(() => {
+    const source = view === "personal" ? personalAll : teamAll;
 
-    const total = todos.length;
+    const total = source.length;
+    const completed = source.filter((todo) => todo.completed).length;
+    const inProgress = source.filter((todo) => !todo.completed).length;
+    const overdue = source.filter((todo) => {
+      if (todo.completed || !todo.deadline) return false;
+      return new Date(todo.deadline) < new Date(new Date().setHours(0,0,0,0));
+    }).length;
 
-    const completed =
-      todos.filter(
-        (todo) => todo.completed
-      ).length;
-
-    const inProgress =
-      total - completed;
-
-    const overdue =
-      todos.filter((todo) => {
-        if (
-          todo.completed ||
-          !todo.deadline
-        ) {
-          return false;
-        }
-
-        return (
-          new Date(todo.deadline) <
-          new Date(
-            new Date().setHours(
-              0,
-              0,
-              0,
-              0
-            )
-          )
-        );
-      }).length;
-
-    return {
-      total,
-      completed,
-      inProgress,
-      overdue,
-    };
-  }, [todos]);
+    return { total, completed, inProgress, overdue };
+  }, [personalAll, teamAll, view]);
+  
 
   return (
     <div className="min-h-screen bg-[#080b16] text-white">
@@ -332,6 +329,23 @@ function Todo({
 
             </div>
 
+          </div>
+
+          {/* PROJECT SELECTOR + VIEW TABS */}
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <ProjectSelector projects={[] /* projects loaded from localStorage in selector */} />
+            </div>
+
+            <div className="ml-4 flex items-center gap-2">
+              <button onClick={() => setView("personal")} className={`rounded-xl px-3 py-2 text-xs ${view === "personal" ? "bg-indigo-600 text-white" : "bg-white/[0.02] text-slate-300"}`}>
+                Personal Todo
+              </button>
+
+              <button onClick={() => setView("team")} className={`rounded-xl px-3 py-2 text-xs ${view === "team" ? "bg-indigo-600 text-white" : "bg-white/[0.02] text-slate-300"}`}>
+                Team Projects
+              </button>
+            </div>
           </div>
 
           {/* STATISTICS */}

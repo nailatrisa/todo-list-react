@@ -5,6 +5,7 @@ const initialForm = {
   description: "",
   deadline: "",
   priority: "Medium",
+  project: "",
 };
 
 function TodoForm({
@@ -14,6 +15,14 @@ function TodoForm({
 }) {
   const [form, setForm] =
     useState(initialForm);
+  const [projects] = useState(() => {
+    try {
+      const raw = window.localStorage.getItem("taskflow_projects");
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  });
 
   useEffect(() => {
     if (editingTodo) {
@@ -25,6 +34,7 @@ function TodoForm({
           editingTodo.deadline || "",
         priority:
           editingTodo.priority || "Medium",
+        project: editingTodo.project || "",
       });
     } else {
       setForm(initialForm);
@@ -159,6 +169,17 @@ function TodoForm({
           </select>
         </div>
 
+      </div>
+
+      <div className="mt-4">
+        <label className="mb-2 block text-xs font-medium text-slate-400">Project (opsional)</label>
+
+        <select name="project" value={form.project} onChange={handleChange} className="w-full rounded-xl border border-white/[0.07] bg-[#101522] px-4 py-3 text-sm text-slate-300 outline-none focus:border-indigo-500/50">
+          <option value="">Personal / No Project</option>
+          {projects.map((p) => (
+            <option key={p.id} value={p.name}>{p.name}</option>
+          ))}
+        </select>
       </div>
 
       {/* BUTTON */}

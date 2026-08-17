@@ -1,3 +1,5 @@
+import Icon from "./Icon";
+
 function Sidebar({
   user,
   activeMenu,
@@ -12,31 +14,31 @@ function Sidebar({
       {
         section: "MAIN",
         items: [
-          ["Dashboard", "⌂"],
-          ["Todo", "✓"],
-          ["My Tasks", "▣"],
+          ["Dashboard", "Dashboard"],
+          ["Todo", "Todo"],
+          ["My Tasks", "MyTasks"],
         ],
       },
       {
         section: "WORKSPACE",
         items: [
-          ["Task Management", "◈"],
-          ["Project Management", "▦"],
-          ["Team Management", "♧"],
-          ["Milestone", "◇"],
-          ["Checklist", "☑"],
-          ["Kanban Board", "▤"],
-          ["Calendar", "⌚"],
-          ["Notifications", "✦"],
-          ["Analytics", "◔"],
+          ["Task Management", "Projects"],
+          ["Project Management", "Projects"],
+          ["Team Management", "Team"],
+          ["Milestone", "Milestone"],
+          ["Checklist", "Checklist"],
+          ["Kanban Board", "Projects"],
+          ["Calendar", "Calendar"],
+          ["Notifications", "Notifications"],
+          ["Analytics", "Report"],
         ],
       },
       {
         section: "SYSTEM",
         items: [
-          ["Search", "⌕"],
-          ["Role & Permission", "♙"],
-          ["Settings", "⚙"],
+          ["Search", "Search"],
+          ["Role & Permission", "Settings"],
+          ["Settings", "Settings"],
         ],
       },
     ],
@@ -45,30 +47,30 @@ function Sidebar({
       {
         section: "MAIN",
         items: [
-          ["Dashboard", "⌂"],
-          ["Todo", "✓"],
-          ["My Tasks", "▣"],
+          ["Dashboard", "Dashboard"],
+          ["Todo", "Todo"],
+          ["My Tasks", "MyTasks"],
         ],
       },
       {
         section: "WORKSPACE",
         items: [
-          ["Task Management", "◈"],
-          ["Project Management", "▦"],
-          ["Team Management", "♧"],
-          ["Milestone", "◇"],
-          ["Checklist", "☑"],
-          ["Kanban Board", "▤"],
-          ["Calendar", "⌚"],
-          ["Notifications", "✦"],
-          ["Analytics", "◔"],
+          ["Task Management", "Projects"],
+          ["Project Management", "Projects"],
+          ["Team Management", "Team"],
+          ["Milestone", "Milestone"],
+          ["Checklist", "Checklist"],
+          ["Kanban Board", "Projects"],
+          ["Calendar", "Calendar"],
+          ["Notifications", "Notifications"],
+          ["Analytics", "Report"],
         ],
       },
       {
         section: "SYSTEM",
         items: [
-          ["Search", "⌕"],
-          ["Settings", "⚙"],
+          ["Search", "Search"],
+          ["Settings", "Settings"],
         ],
       },
     ],
@@ -77,20 +79,20 @@ function Sidebar({
       {
         section: "MAIN",
         items: [
-          ["Dashboard", "⌂"],
-          ["Todo", "✓"],
-          ["My Tasks", "▣"],
-          ["Checklist", "☑"],
-          ["Kanban Board", "▤"],
-          ["Calendar", "⌚"],
-          ["Analytics", "◔"],
+          ["Dashboard", "Dashboard"],
+          ["Todo", "Todo"],
+          ["My Tasks", "MyTasks"],
+          ["Checklist", "Checklist"],
+          ["Kanban Board", "Projects"],
+          ["Calendar", "Calendar"],
+          ["Analytics", "Report"],
         ],
       },
       {
         section: "SYSTEM",
         items: [
-          ["Search", "⌕"],
-          ["Settings", "⚙"],
+          ["Search", "Search"],
+          ["Settings", "Settings"],
         ],
       },
     ],
@@ -192,7 +194,7 @@ function Sidebar({
               </p>
 
               {group.items.map(
-                ([name, icon]) => {
+                ([name, iconName]) => {
                   const active =
                     activeMenu === name;
 
@@ -227,7 +229,8 @@ function Sidebar({
                           }
                         `}
                       >
-                        {icon}
+                        {/* Use inline Icon component for consistent style */}
+                        <Icon name={iconName} size={18} className={active ? "text-indigo-400" : "text-slate-600"} stroke={1.8} />
                       </span>
 
                       {/* NAME */}
@@ -256,7 +259,7 @@ function Sidebar({
             className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-xs text-slate-500 transition hover:bg-red-500/5 hover:text-red-400"
           >
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.03]">
-              ↪
+              <Icon name="Logout" size={16} className="text-slate-400" stroke={1.6} />
             </span>
 
             Sign out

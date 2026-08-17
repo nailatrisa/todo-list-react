@@ -10,6 +10,20 @@ function Settings({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSide
     autoSave: true,
   });
 
+  const [company, setCompany] = useLocalStorage("company_profile", {
+    name: "",
+    contact: "",
+    website: "",
+    email: "",
+    address: "",
+    logo: "",
+  });
+
+  const handleCompanyChange = (e) => {
+    const { name, value } = e.target;
+    setCompany((c) => ({ ...c, [name]: value }));
+  };
+
   const toggleSetting = (key) => {
     setSettings((current) => ({ ...current, [key]: !current[key] }));
   };
@@ -45,6 +59,19 @@ function Settings({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSide
           </div>
 
           <div className="space-y-4">
+            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
+              <h3 className="text-base font-semibold">Company Profile</h3>
+              <p className="mt-1 text-sm text-slate-600">Informasi perusahaan disimpan secara lokal.</p>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <input name="name" value={company.name} onChange={handleCompanyChange} placeholder="Company Name" className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-sm text-white outline-none" />
+                <input name="contact" value={company.contact} onChange={handleCompanyChange} placeholder="Contact" className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-sm text-white outline-none" />
+                <input name="website" value={company.website} onChange={handleCompanyChange} placeholder="Website" className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-sm text-white outline-none" />
+                <input name="email" value={company.email} onChange={handleCompanyChange} placeholder="Company Email" className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-sm text-white outline-none" />
+                <input name="address" value={company.address} onChange={handleCompanyChange} placeholder="Company Address" className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-sm text-white outline-none col-span-2" />
+              </div>
+
+            </div>
             <SettingCard
               title="Notifications"
               description="Terima notifikasi task dan update penting."

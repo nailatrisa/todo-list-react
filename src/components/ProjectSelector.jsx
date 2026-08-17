@@ -2,6 +2,8 @@ import useLocalStorage from "../hooks/useLocalStorage";
 
 function ProjectSelector({ projects = [], onChange }) {
   const [selected, setSelected] = useLocalStorage("taskflow_selected_project", "");
+  const [storedProjects] = useLocalStorage("taskflow_projects", []);
+  const effectiveProjects = (projects && projects.length) ? projects : storedProjects;
 
   const handleChange = (e) => {
     const val = e.target.value;
@@ -19,7 +21,7 @@ function ProjectSelector({ projects = [], onChange }) {
           className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-2 text-sm text-white outline-none"
         >
           <option value="">-- Select Project --</option>
-          {projects.map((p) => (
+          {effectiveProjects.map((p) => (
             <option key={p.id} value={p.name}>
               {p.name}
             </option>
