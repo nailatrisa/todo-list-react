@@ -115,15 +115,16 @@ function Sidebar({
       <aside
         className={`
           fixed left-0 top-0 z-50 flex h-screen w-[270px]
-          flex-col border-r border-white/[0.07]
-          bg-[#0b0f1c]
+          flex-col border-r border-[var(--border)]
+          bg-[var(--sidebar)]
+          shadow-[var(--shadow-lg)]
           transition-transform duration-300
           lg:translate-x-0
           ${open ? "translate-x-0" : "-translate-x-full"}
         `}
       >
         {/* BRAND */}
-        <div className="flex h-[82px] items-center border-b border-white/[0.07] px-6">
+        <div className="flex h-[82px] items-center border-b border-[var(--border)] px-6">
           <div className="flex items-center gap-3">
 
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-black shadow-lg shadow-indigo-500/20">
@@ -132,11 +133,11 @@ function Sidebar({
 
             <div>
               <p className="text-sm font-bold">
-                TASKFLOW
+                NEXORA SOLUTIONS
               </p>
 
-              <p className="text-[9px] uppercase tracking-[0.25em] text-slate-600">
-                Business Workspace
+              <p className="text-[9px] uppercase tracking-[0.25em] text-[var(--muted)]">
+                Workspace
               </p>
             </div>
 
@@ -152,7 +153,7 @@ function Sidebar({
         </div>
 
         {/* USER */}
-        <div className="mx-4 mt-5 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3">
+        <div className="mx-4 mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-sm)]">
           <div className="flex items-center gap-3">
 
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/30 to-violet-500/30 font-bold text-indigo-300">
@@ -208,12 +209,12 @@ function Sidebar({
                       }}
                       className={`
                         mb-1 flex w-full items-center gap-3
-                        rounded-xl px-3 py-2.5
+                        rounded-xl border px-3 py-2.5
                         text-left text-xs transition
                         ${
                           active
-                            ? "bg-indigo-500/10 text-indigo-300"
-                            : "text-slate-500 hover:bg-white/[0.035] hover:text-slate-200"
+                            ? "border-[var(--primary-border)] bg-[var(--primary-soft)] text-[var(--primary)] shadow-[var(--shadow-sm)]"
+                            : "border-transparent text-[var(--muted)] hover:border-[var(--border)] hover:bg-[var(--surface)] hover:text-[var(--text)]"
                         }
                       `}
                     >
@@ -252,13 +253,13 @@ function Sidebar({
         </nav>
 
         {/* LOGOUT */}
-        <div className="border-t border-white/[0.07] p-4">
+        <div className="border-t border-[var(--border)] p-4">
 
           <button
             onClick={onLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-xs text-slate-500 transition hover:bg-red-500/5 hover:text-red-400"
+            className="flex w-full items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-3 text-xs text-[var(--muted)] transition hover:border-[var(--danger-soft)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.03]">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--panel)] text-[var(--text)]">
               <Icon name="Logout" size={16} className="text-slate-400" stroke={1.6} />
             </span>
 

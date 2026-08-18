@@ -127,11 +127,11 @@ function Login({ onLogin }) {
 
                 <div>
                   <p className="text-sm font-bold tracking-wide">
-                    TASKFLOW
+                    NEXORA SOLUTIONS
                   </p>
 
                   <p className="text-[10px] uppercase tracking-[0.25em] text-slate-500">
-                    Business Workspace
+                    Workspace
                   </p>
                 </div>
 
@@ -193,7 +193,7 @@ function Login({ onLogin }) {
             </div>
 
             <div className="flex items-center justify-between border-t border-white/10 pt-6 text-xs text-slate-600">
-              <span>© 2026 TaskFlow Workspace</span>
+              <span>© 2026 Nexora Solutions</span>
               <span>Business Todo & Task Management</span>
             </div>
 
@@ -215,7 +215,7 @@ function Login({ onLogin }) {
 
                 <div>
                   <p className="text-sm font-bold">
-                    TASKFLOW
+                    NEXORA SOLUTIONS
                   </p>
 
                   <p className="text-[10px] uppercase tracking-widest text-slate-500">

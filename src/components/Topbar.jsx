@@ -11,7 +11,7 @@ const defaultNotifications = [
   },
   {
     id: 2,
-    title: "Deadline TaskFlow hampir tiba",
+    title: "Deadline Nexora Solutions hampir tiba",
     detail: "Satu milestone akan jatuh tempo dalam 2 hari.",
     unread: true,
   },
@@ -129,11 +129,11 @@ function Topbar({
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-[82px] items-center justify-between border-b border-white/[0.07] bg-[#080b16]/90 px-4 backdrop-blur-xl transition-colors duration-300 sm:px-8">
+    <header className="sticky top-0 z-30 flex h-[82px] items-center justify-between border-b border-[var(--border)] bg-[var(--header)] px-4 shadow-[var(--shadow-md)] backdrop-blur-xl transition-colors duration-300 sm:px-8">
       <div className="flex items-center gap-3 sm:gap-4">
         <button
           onClick={toggleSidebar}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-slate-400 lg:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] lg:hidden"
         >
           ☰
         </button>
@@ -148,7 +148,7 @@ function Topbar({
 
       <div className="flex items-center gap-2 sm:gap-3">
         <form onSubmit={handleSubmit} className="hidden md:flex">
-          <div className="flex h-10 items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 text-xs text-slate-600">
+          <div className="flex h-10 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-xs text-[var(--muted)] shadow-[var(--shadow-sm)]">
             <span className="text-slate-400">⌕</span>
             <input
               value={query}
@@ -176,14 +176,14 @@ function Topbar({
             setQuery("");
             onSearch?.("");
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-slate-400 md:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] md:hidden"
         >
           ⌕
         </button>
 
         <button
           onClick={() => toggleTheme()}
-          className="flex h-10 items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 text-xs text-slate-400 transition hover:text-white"
+          className="flex h-10 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-xs text-[var(--text-secondary)] transition hover:border-[var(--primary-border)] hover:text-[var(--text)]"
         >
           <span>{theme === "dark" ? "☀" : "☾"}</span>
           <span>{theme === "dark" ? "Light" : "Dark"}</span>
@@ -192,7 +192,7 @@ function Topbar({
         <div className="relative" ref={notificationRef}>
           <button
             onClick={() => setShowNotifications((current) => !current)}
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-slate-400 hover:text-white"
+            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:border-[var(--primary-border)] hover:text-[var(--text)]"
           >
             ♧
             {unreadCount > 0 && (
