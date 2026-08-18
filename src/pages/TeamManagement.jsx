@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
+import ProjectSelector from "../components/ProjectSelector";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { createId } from "../utils/storage";
 
 function TeamManagement({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSidebarOpen, onSearch, searchQuery }) {
   const [tasks] = useLocalStorage("taskflow_tasks", []);
-  const activeState = activeMenu || "Team Management";
+  const [projects] = useLocalStorage("taskflow_projects", []);
+  const activeState = activeMenu || "Team";
 
   const [teamMembers, setTeamMembers] = useLocalStorage("taskflow_team", [
     { id: createId(), name: "Alya", role: "Product Lead", focus: "Strategy", email: "alya@company.com", department: "Product", position: "Lead", status: "Active", projects: ["Website Sekolah"] },
@@ -16,6 +18,9 @@ function TeamManagement({ user, onLogout, onNavigate, activeMenu, sidebarOpen, s
   ]);
 
   const [newMember, setNewMember] = useState({ name: "", role: "Member", focus: "", email: "", department: "", position: "", status: "Active", projects: [] });
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("All");
+  const [deptFilter, setDeptFilter] = useState("All");
 
   const teamMembersWithWorkload = useMemo(() => {
     return teamMembers.map((member) => ({
@@ -26,9 +31,17 @@ function TeamManagement({ user, onLogout, onNavigate, activeMenu, sidebarOpen, s
 
   const [selectedProject] = useLocalStorage("taskflow_selected_project", "");
 
-  const filteredByProject = selectedProject
+  const filteredByProject = (selectedProject
     ? teamMembersWithWorkload.filter((m) => (m.projects || []).includes(selectedProject))
-    : teamMembersWithWorkload;
+    : teamMembersWithWorkload
+  ).filter((member) => {
+    const matchesSearch = `${member.name} ${member.email} ${member.department} ${member.position}`
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesRole = roleFilter === "All" || member.role === roleFilter;
+    const matchesDept = deptFilter === "All" || member.department === deptFilter;
+    return matchesSearch && matchesRole && matchesDept;
+  });
 
   const handleAddMember = (e) => {
     e.preventDefault();
@@ -38,12 +51,17 @@ function TeamManagement({ user, onLogout, onNavigate, activeMenu, sidebarOpen, s
       return;
     }
 
+    const payload = {
+      ...newMember,
+      projects: selectedProject ? [selectedProject] : newMember.projects || [],
+    };
+
     setTeamMembers((current) => [
-      { id: createId(), ...newMember },
+      { id: createId(), ...payload },
       ...current,
     ]);
 
-    setNewMember({ name: "", role: "Member", focus: "" });
+    setNewMember({ name: "", role: "Member", focus: "", email: "", department: "", position: "", status: "Active", projects: selectedProject ? [selectedProject] : [] });
   };
 
   const handleRemoveMember = (id) => {
@@ -78,8 +96,43 @@ function TeamManagement({ user, onLogout, onNavigate, activeMenu, sidebarOpen, s
         <div className="mx-auto max-w-[1500px] p-5 sm:p-8">
           <div className="mb-8">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-400">TEAM</p>
-            <h1 className="mt-2 text-2xl font-bold sm:text-3xl">Team Management</h1>
+            <h1 className="mt-2 text-2xl font-bold sm:text-3xl">Team</h1>
             <p className="mt-2 text-sm text-slate-600">Pantau pembagian pekerjaan dan beban kerja tim secara jelas.</p>
+          </div>
+
+          <ProjectSelector projects={projects} />
+
+          <div className="mb-6 block rounded-2xl border border-white/[0.07] bg-white/[0.015] p-4">
+            <div className="grid gap-3 md:grid-cols-3">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search member..."
+                className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-xs text-white outline-none"
+              />
+
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-xs text-white outline-none"
+              >
+                <option value="All">All Roles</option>
+                <option value="Admin">Admin</option>
+                <option value="Manager">Manager</option>
+                <option value="Member">Member</option>
+              </select>
+
+              <select
+                value={deptFilter}
+                onChange={(e) => setDeptFilter(e.target.value)}
+                className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-2 text-xs text-white outline-none"
+              >
+                <option value="All">All Departments</option>
+                {[...new Set(teamMembers.map((member) => member.department).filter(Boolean))].map((dept) => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="mb-6 rounded-2xl border border-white/[0.07] bg-white/[0.015] p-4">
@@ -150,14 +203,23 @@ function TeamManagement({ user, onLogout, onNavigate, activeMenu, sidebarOpen, s
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/10 text-sm font-bold text-indigo-400">
                     {member.name.charAt(0)}
                   </div>
-                  <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] text-emerald-400">
-                    {member.workload} tasks
+                  <span className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${member.status === "Active" ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"}`}>
+                    {member.status || "Active"}
                   </span>
                 </div>
+
                 <h2 className="mt-4 text-base font-semibold">{member.name}</h2>
                 <p className="mt-1 text-xs text-slate-600">{member.role}</p>
-                <p className="mt-3 text-xs text-slate-500">Focus: {member.focus}</p>
-                <div className="mt-3 flex gap-2">
+
+                <div className="mt-3 space-y-2 text-[11px] text-slate-500">
+                  <div><span className="text-slate-600">Email:</span> {member.email || "-"}</div>
+                  <div><span className="text-slate-600">Department:</span> {member.department || "-"}</div>
+                  <div><span className="text-slate-600">Position:</span> {member.position || member.focus || "-"}</div>
+                  <div><span className="text-slate-600">Project:</span> {(member.projects || []).join(", ") || selectedProject || "-"}</div>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between border-t border-white/[0.06] pt-3">
+                  <span className="text-[10px] text-slate-500">{member.workload} tasks</span>
                   <button onClick={() => handleRemoveMember(member.id)} className="rounded-lg px-3 py-2 text-[10px] text-slate-600 hover:bg-red-500/10 hover:text-red-400">
                     Remove
                   </button>

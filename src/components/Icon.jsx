@@ -2,6 +2,12 @@ function Icon({ name, size = 18, className = "", stroke = 2 }) {
   const common = { width: size, height: size, strokeWidth: stroke, className };
 
   switch (name) {
+    case "Menu":
+      return (
+        <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
     case "Dashboard":
       return (
         <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -13,6 +19,33 @@ function Icon({ name, size = 18, className = "", stroke = 2 }) {
         <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 11l3 3L22 4" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "Sun":
+      return (
+        <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="4" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "Moon":
+      return (
+        <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "Bell":
+      return (
+        <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M10 21a2 2 0 0 0 4 0" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "User":
+      return (
+        <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="8" r="4" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M4 20c1.8-3 5-4 8-4s6.2 1 8 4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
     case "MyTasks":

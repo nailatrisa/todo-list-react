@@ -11,11 +11,11 @@ function Settings({ user, onLogout, onNavigate, activeMenu, sidebarOpen, setSide
   });
 
   const [company, setCompany] = useLocalStorage("company_profile", {
-    name: "",
-    contact: "",
-    website: "",
-    email: "",
-    address: "",
+    name: "Nexora Solutions",
+    contact: "+62 812-3456-7890",
+    website: "www.nexora.com",
+    email: "hello@nexora.com",
+    address: "Jl. Merdeka No. 123, Bandung, Indonesia",
     logo: "",
   });
 

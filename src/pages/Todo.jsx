@@ -332,12 +332,12 @@ function Todo({
           </div>
 
           {/* PROJECT SELECTOR + VIEW TABS */}
-          <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex-1">
-              <ProjectSelector projects={[] /* projects loaded from localStorage in selector */} />
+              <ProjectSelector projects={[]} />
             </div>
 
-            <div className="ml-4 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <button onClick={() => setView("personal")} className={`rounded-xl px-3 py-2 text-xs ${view === "personal" ? "bg-indigo-600 text-white" : "bg-white/[0.02] text-slate-300"}`}>
                 Personal Todo
               </button>
