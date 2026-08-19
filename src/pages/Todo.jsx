@@ -1,14 +1,29 @@
-import { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
-import TodoForm from "../components/TodoForm";
-import TodoItem from "../components/TodoItem";
 import useLocalStorage from "../hooks/useLocalStorage";
-import {
-  STORAGE_KEYS,
-  createId,
-} from "../utils/storage";
-import ProjectSelector from "../components/ProjectSelector";
+import { createId } from "../utils/storage";
+
+// =========================
+// DEFAULT DATA
+// =========================
+const DEFAULT_TEAMS = [
+  { id: "team-1", name: "Engineering" },
+  { id: "team-2", name: "Marketing" },
+  { id: "team-3", name: "Sales" },
+  { id: "team-4", name: "Design" },
+];
+
+const emptyTodo = {
+  title: "",
+  description: "",
+  deadline: "",
+  priority: "Medium",
+  projectId: "",
+  teamId: "",
+  type: "personal", // "personal" atau "team"
+  completed: false,
+};
 
 function Todo({
   user,
@@ -20,584 +35,545 @@ function Todo({
   onSearch,
   searchQuery,
 }) {
-  const [todos, setTodos] =
-    useLocalStorage(
-      STORAGE_KEYS.TODOS,
-      []
-    );
+  const [todos, setTodos] = useLocalStorage("taskflow_todos", []);
+  const [projects] = useLocalStorage("taskflow_projects", []);
+  const [teams] = useLocalStorage("taskflow_teams", DEFAULT_TEAMS);
 
-  const [localSidebarOpen, setLocalSidebarOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingTodo, setEditingTodo] = useState(null);
+  const [form, setForm] = useState(emptyTodo);
+  const [search, setSearch] = useState("");
+
   const activeState = activeMenu || "Todo";
 
-  const [editingTodo, setEditingTodo] =
-    useState(null);
+  // =========================
+  // FILTER TODOS
+  // =========================
+  const filteredTodos = useMemo(() => {
+    return todos.filter((todo) =>
+      todo.title.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [todos, search]);
 
-  const [search, setSearch] =
-    useState("");
+  // =========================
+  // HANDLE FORM CHANGE
+  // =========================
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const [filter, setFilter] =
-    useState("All");
+  // =========================
+  // HANDLE TYPE CHANGE (Personal / Team)
+  // =========================
+  const handleTypeChange = (type) => {
+    setForm((prev) => ({
+      ...prev,
+      type,
+      teamId: "", // reset teamId
+      projectId: "", // reset projectId
+    }));
+  };
 
-  const [draggedId, setDraggedId] =
-    useState(null);
-
-  const [selectedProject] = useLocalStorage("taskflow_selected_project", "");
-  const [view, setView] = useState("personal");
-
-  /* =========================
-     CREATE / UPDATE
-  ========================= */
-
-  const handleSubmit = (form) => {
-    if (editingTodo) {
-      setTodos((current) =>
-        current.map((todo) =>
-          todo.id === editingTodo.id
-            ? {
-                ...todo,
-                ...form,
-                updatedAt:
-                  new Date().toISOString(),
-              }
-            : todo
-        )
-      );
-
-      setEditingTodo(null);
-
+  // =========================
+  // HANDLE SUBMIT
+  // =========================
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.title.trim()) {
+      alert("Judul task wajib diisi.");
       return;
     }
 
     const newTodo = {
-      id: createId(),
-      title: form.title.trim(),
-      description:
-        form.description.trim(),
-      deadline: form.deadline,
-      priority: form.priority,
-      completed: false,
-      project: form.project || "",
-      createdBy: (user && user.email) || "",
-      createdAt:
-        new Date().toISOString(),
-      updatedAt:
-        new Date().toISOString(),
+      ...form,
+      projectId: form.projectId || "",
+      teamId: form.teamId || "",
     };
 
-    setTodos((current) => [
-      newTodo,
-      ...current,
-    ]);
+    if (editingTodo) {
+      setTodos((current) =>
+        current.map((todo) =>
+          todo.id === editingTodo.id ? { ...todo, ...newTodo } : todo
+        )
+      );
+    } else {
+      setTodos((current) => [
+        { ...newTodo, id: createId(), createdAt: new Date().toISOString() },
+        ...current,
+      ]);
+    }
+
+    closeForm();
   };
 
-  /* =========================
-     TOGGLE
-  ========================= */
+  // =========================
+  // OPEN / CLOSE FORM
+  // =========================
+  const openCreateForm = () => {
+    setEditingTodo(null);
+    setForm(emptyTodo);
+    setShowForm(true);
+  };
 
-  const handleToggle = (id) => {
+  const openEditForm = (todo) => {
+    setEditingTodo(todo);
+    setForm({
+      title: todo.title || "",
+      description: todo.description || "",
+      deadline: todo.deadline || "",
+      priority: todo.priority || "Medium",
+      projectId: todo.projectId || "",
+      teamId: todo.teamId || "",
+      type: todo.type || "personal",
+      completed: todo.completed || false,
+    });
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingTodo(null);
+    setForm(emptyTodo);
+  };
+
+  // =========================
+  // TOGGLE COMPLETED
+  // =========================
+  const toggleCompleted = (id) => {
     setTodos((current) =>
       current.map((todo) =>
-        todo.id === id
-          ? {
-              ...todo,
-              completed: !todo.completed,
-              updatedAt:
-                new Date().toISOString(),
-            }
-          : todo
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
       )
     );
   };
 
-  /* =========================
-     DELETE
-  ========================= */
+  const deleteTodo = (id) => {
+    if (!window.confirm("Hapus task ini?")) return;
+    setTodos((current) => current.filter((todo) => todo.id !== id));
+  };
 
-  const handleDelete = (id) => {
-    const confirmed =
-      window.confirm(
-        "Apakah kamu yakin ingin menghapus task ini?"
-      );
-
-    if (!confirmed) return;
-
-    setTodos((current) =>
-      current.filter(
-        (todo) => todo.id !== id
-      )
-    );
-
-    if (editingTodo?.id === id) {
-      setEditingTodo(null);
+  // =========================
+  // GET PROJECTS BY TYPE
+  // =========================
+  const getAvailableProjects = () => {
+    if (form.type === "personal") {
+      // Project personal: teamId kosong
+      return projects.filter((p) => !p.teamId);
+    } else {
+      // Project team: teamId sesuai dengan form.teamId
+      if (!form.teamId) return [];
+      return projects.filter((p) => p.teamId === form.teamId);
     }
   };
 
-  /* =========================
-     DRAG & DROP
-  ========================= */
-
-  const handleDragStart = (id) => {
-    setDraggedId(id);
-  };
-
-  const handleDragOver = (event) => {
-    event.preventDefault();
-  };
-
-  const handleDrop = (targetId) => {
-    if (!draggedId) return;
-
-    if (draggedId === targetId) {
-      setDraggedId(null);
-      return;
-    }
-
-    setTodos((current) => {
-      const draggedIndex =
-        current.findIndex(
-          (todo) =>
-            todo.id === draggedId
-        );
-
-      const targetIndex =
-        current.findIndex(
-          (todo) =>
-            todo.id === targetId
-        );
-
-      if (
-        draggedIndex === -1 ||
-        targetIndex === -1
-      ) {
-        return current;
-      }
-
-      const updated = [...current];
-
-      const [draggedTodo] =
-        updated.splice(
-          draggedIndex,
-          1
-        );
-
-      updated.splice(
-        targetIndex,
-        0,
-        draggedTodo
-      );
-
-      return updated;
-    });
-
-    setDraggedId(null);
-  };
-
-  /* =========================
-     FILTER
-  ========================= */
-
-  const filteredTodos = useMemo(() => {
-    return todos.filter((todo) => {
-      // Separate personal vs team view
-      if (view === "personal") {
-        if (todo.project) return false;
-        if (todo.createdBy !== (user && user.email)) return false;
-      }
-
-      if (view === "team") {
-        if (selectedProject) {
-          if (todo.project !== selectedProject) return false;
-        } else {
-          if (!todo.project) return false;
-        }
-      }
-
-      const matchesSearch =
-        todo.title
-          .toLowerCase()
-          .includes(
-            search.toLowerCase()
-          ) ||
-        todo.description
-          .toLowerCase()
-          .includes(
-            search.toLowerCase()
-          );
-
-      let matchesFilter = true;
-
-      if (filter === "Completed") {
-        matchesFilter = todo.completed;
-      }
-
-      if (filter === "In Progress") {
-        matchesFilter = !todo.completed;
-      }
-
-      if (
-        ["Low", "Medium", "High", "Urgent"].includes(
-          filter
-        )
-      ) {
-        matchesFilter =
-          todo.priority === filter;
-      }
-
-      return (
-        matchesSearch &&
-        matchesFilter
-      );
-    });
-  }, [todos, search, filter]);
-
-  const personalAll = useMemo(() => {
-    return todos.filter((t) => !t.project && t.createdBy === (user && user.email));
-  }, [todos, user]);
-
-  const teamAll = useMemo(() => {
-    if (selectedProject) return todos.filter((t) => t.project === selectedProject);
-    return todos.filter((t) => !!t.project);
-  }, [todos, selectedProject]);
-
-  const stats = useMemo(() => {
-    const source = view === "personal" ? personalAll : teamAll;
-
-    const total = source.length;
-    const completed = source.filter((todo) => todo.completed).length;
-    const inProgress = source.filter((todo) => !todo.completed).length;
-    const overdue = source.filter((todo) => {
-      if (todo.completed || !todo.deadline) return false;
-      return new Date(todo.deadline) < new Date(new Date().setHours(0,0,0,0));
-    }).length;
-
-    return { total, completed, inProgress, overdue };
-  }, [personalAll, teamAll, view]);
-  
-
+  // =========================
+  // RENDER
+  // =========================
   return (
     <div className="min-h-screen bg-[#080b16] text-white">
-
       <Sidebar
         user={user}
         activeMenu={activeState}
         setActiveMenu={onNavigate}
-        open={sidebarOpen ?? localSidebarOpen}
-        setOpen={setSidebarOpen || setLocalSidebarOpen}
+        open={sidebarOpen ?? false}
+        setOpen={setSidebarOpen}
         onLogout={onLogout}
+        onNavigate={onNavigate}
       />
 
       <main className="min-h-screen lg:ml-[270px]">
-
         <Topbar
           user={user}
           activeMenu={activeState}
-          onOpenSidebar={() => (setSidebarOpen ? setSidebarOpen(true) : setLocalSidebarOpen(true))}
-          onToggleSidebar={() => (setSidebarOpen ? setSidebarOpen(true) : setLocalSidebarOpen(true))}
+          onOpenSidebar={() => setSidebarOpen(true)}
+          onToggleSidebar={() => setSidebarOpen(true)}
           onSearch={onSearch}
           searchQuery={searchQuery || ""}
           onLogout={onLogout}
         />
 
-        <div className="mx-auto max-w-[1500px] p-5 sm:p-8">
-
+        <div className="mx-auto max-w-[1200px] p-5 sm:p-8">
           {/* HEADER */}
-
-          <div className="mb-7">
-
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-400">
-              TASK MANAGEMENT
-            </p>
-
-            <div className="mt-2 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-
-              <div>
-
-                <h1 className="text-2xl font-bold sm:text-3xl">
-                  Todo
-                </h1>
-
-                <p className="mt-2 text-sm text-slate-600">
-                  Kelola pekerjaan dan deadline
-                  kamu dalam satu tempat.
-                </p>
-
-              </div>
-
-              <div className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 py-2.5 text-xs text-slate-500">
-                {todos.length} total tasks
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* PROJECT SELECTOR + VIEW TABS */}
-          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex-1">
-              <ProjectSelector projects={[]} />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button onClick={() => setView("personal")} className={`rounded-xl px-3 py-2 text-xs ${view === "personal" ? "bg-indigo-600 text-white" : "bg-white/[0.02] text-slate-300"}`}>
-                Personal Todo
-              </button>
-
-              <button onClick={() => setView("team")} className={`rounded-xl px-3 py-2 text-xs ${view === "team" ? "bg-indigo-600 text-white" : "bg-white/[0.02] text-slate-300"}`}>
-                Team Projects
-              </button>
-            </div>
-          </div>
-
-          {/* STATISTICS */}
-
-          <div className="mb-5 grid gap-3 grid-cols-2 xl:grid-cols-4">
-
-            <Stat
-              label="TOTAL"
-              value={stats.total}
-              icon="◈"
-            />
-
-            <Stat
-              label="COMPLETED"
-              value={stats.completed}
-              icon="✓"
-            />
-
-            <Stat
-              label="IN PROGRESS"
-              value={stats.inProgress}
-              icon="◷"
-            />
-
-            <Stat
-              label="OVERDUE"
-              value={stats.overdue}
-              icon="!"
-            />
-
-          </div>
-
-          {/* MAIN */}
-
-          <div className="grid gap-5 xl:grid-cols-[380px_1fr]">
-
-            {/* FORM */}
-
+          <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
-
-              <TodoForm
-                onSubmit={handleSubmit}
-                editingTodo={editingTodo}
-                onCancel={() =>
-                  setEditingTodo(null)
-                }
-              />
-
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-400">
+                TASKS
+              </p>
+              <h1 className="mt-2 text-2xl font-bold sm:text-3xl">Todo</h1>
+              <p className="mt-2 text-sm text-slate-600">
+                Kelola tugas pribadi dan tim Anda.
+              </p>
             </div>
-
-            {/* LIST */}
-
-            <div>
-
-              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 sm:p-6">
-
-                {/* TOOLBAR */}
-
-                <div className="flex flex-col gap-3 lg:flex-row">
-
-                  {/* SEARCH */}
-
-                  <div className="relative flex-1">
-
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-700">
-                      ⌕
-                    </span>
-
-                    <input
-                      value={search}
-                      onChange={(event) =>
-                        setSearch(
-                          event.target.value
-                        )
-                      }
-                      placeholder="Search tasks..."
-                      className="w-full rounded-xl border border-white/[0.07] bg-black/20 py-3 pl-10 pr-4 text-xs text-white outline-none placeholder:text-slate-700 focus:border-indigo-500/50"
-                    />
-
-                  </div>
-
-                  {/* FILTER */}
-
-                  <select
-                    value={filter}
-                    onChange={(event) =>
-                      setFilter(
-                        event.target.value
-                      )
-                    }
-                    className="rounded-xl border border-white/[0.07] bg-[#101522] px-4 py-3 text-xs text-slate-400 outline-none focus:border-indigo-500/50"
-                  >
-                    <option value="All">
-                      All Tasks
-                    </option>
-
-                    <option value="In Progress">
-                      In Progress
-                    </option>
-
-                    <option value="Completed">
-                      Completed
-                    </option>
-
-                    <option value="Low">
-                      🔵 Low
-                    </option>
-
-                    <option value="Medium">
-                      🟡 Medium
-                    </option>
-
-                    <option value="High">
-                      🟠 High
-                    </option>
-
-                    <option value="Urgent">
-                      🔴 Urgent
-                    </option>
-                  </select>
-
-                </div>
-
-                {/* LIST HEADER */}
-
-                <div className="mb-4 mt-6 flex items-center justify-between">
-
-                  <div>
-
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-600">
-                      YOUR TASKS
-                    </p>
-
-                    <p className="mt-1 text-xs text-slate-700">
-                      Drag task untuk mengatur urutan.
-                    </p>
-
-                  </div>
-
-                  <span className="text-[10px] text-slate-600">
-                    {filteredTodos.length} shown
-                  </span>
-
-                </div>
-
-                {/* TODO */}
-
-                {filteredTodos.length === 0 ? (
-                  <EmptyState
-                    search={search}
-                    filter={filter}
-                  />
-                ) : (
-                  <div className="space-y-2">
-
-                    {filteredTodos.map(
-                      (todo) => (
-                        <TodoItem
-                          key={todo.id}
-                          todo={todo}
-                          onToggle={
-                            handleToggle
-                          }
-                          onEdit={
-                            setEditingTodo
-                          }
-                          onDelete={
-                            handleDelete
-                          }
-                          onDragStart={
-                            handleDragStart
-                          }
-                          onDragOver={
-                            handleDragOver
-                          }
-                          onDrop={
-                            handleDrop
-                          }
-                        />
-                      )
-                    )}
-
-                  </div>
-                )}
-
-              </div>
-
-            </div>
-
+            <button
+              onClick={openCreateForm}
+              className="rounded-xl bg-indigo-600 px-5 py-3 text-xs font-semibold transition hover:bg-indigo-500"
+            >
+              + New Task
+            </button>
           </div>
 
+          {/* SEARCH */}
+          <div className="mb-6">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari task..."
+              className="w-full rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 py-3 text-xs text-white outline-none placeholder:text-slate-700 focus:border-indigo-500/50"
+            />
+          </div>
+
+          {/* TODO LIST */}
+          {filteredTodos.length === 0 ? (
+            <div className="flex min-h-[350px] flex-col items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.025]">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-500/10 text-2xl text-indigo-400">
+                ✓
+              </div>
+              <h2 className="mt-5 text-sm font-semibold">Belum ada task</h2>
+              <p className="mt-2 text-xs text-slate-700">
+                Buat task pertama kamu.
+              </p>
+              <button
+                onClick={openCreateForm}
+                className="mt-5 rounded-xl bg-indigo-600 px-5 py-3 text-xs font-semibold hover:bg-indigo-500"
+              >
+                Create Task
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredTodos.map((todo) => (
+                <TodoCard
+                  key={todo.id}
+                  todo={todo}
+                  projects={projects}
+                  teams={teams}
+                  onToggle={toggleCompleted}
+                  onEdit={openEditForm}
+                  onDelete={deleteTodo}
+                />
+              ))}
+            </div>
+          )}
         </div>
-
       </main>
 
+      {/* MODAL FORM */}
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#0d1220] p-6 shadow-2xl">
+            <div className="mb-6 flex items-start justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-400">
+                  TASK
+                </p>
+                <h2 className="mt-2 text-xl font-bold">
+                  {editingTodo ? "Edit Task" : "Create Task"}
+                </h2>
+              </div>
+              <button
+                onClick={closeForm}
+                className="text-xl text-slate-600 hover:text-white"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* =========================
+                  TYPE SELECTOR (PERSONAL / TEAM)
+                  DILETAKKAN DI ATAS
+              ========================= */}
+              <div>
+                <label className="mb-2 block text-xs text-slate-400">
+                  Tipe Task
+                </label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleTypeChange("personal")}
+                    className={`flex-1 rounded-xl border px-4 py-3 text-sm transition ${
+                      form.type === "personal"
+                        ? "border-indigo-500/50 bg-indigo-500/10 text-indigo-400"
+                        : "border-white/[0.07] text-slate-500 hover:border-white/[0.15]"
+                    }`}
+                  >
+                    👤 Personal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleTypeChange("team")}
+                    className={`flex-1 rounded-xl border px-4 py-3 text-sm transition ${
+                      form.type === "team"
+                        ? "border-indigo-500/50 bg-indigo-500/10 text-indigo-400"
+                        : "border-white/[0.07] text-slate-500 hover:border-white/[0.15]"
+                    }`}
+                  >
+                    👥 Team
+                  </button>
+                </div>
+              </div>
+
+              {/* =========================
+                  JIKA TEAM → PILIH TEAM DULU
+              ========================= */}
+              {form.type === "team" && (
+                <Select
+                  label="Pilih Tim"
+                  name="teamId"
+                  value={form.teamId}
+                  onChange={handleChange}
+                  options={[
+                    { value: "", label: "-- Pilih Tim --" },
+                    ...teams.map((t) => ({ value: t.id, label: t.name })),
+                  ]}
+                />
+              )}
+
+              {/* =========================
+                  PROJECT SELECTOR
+              ========================= */}
+              <Select
+                label="Project (Opsional)"
+                name="projectId"
+                value={form.projectId}
+                onChange={handleChange}
+                options={[
+                  { value: "", label: "No Project" },
+                  ...getAvailableProjects().map((p) => ({
+                    value: p.id,
+                    label: p.name,
+                  })),
+                ]}
+                disabled={form.type === "team" && !form.teamId}
+              />
+
+              {/* =========================
+                  FIELD LAINNYA
+              ========================= */}
+              <Field
+                label="Judul Task"
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                placeholder="Masukkan judul task..."
+              />
+
+              <div>
+                <label className="mb-2 block text-xs text-slate-400">
+                  Deskripsi
+                </label>
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  rows="3"
+                  placeholder="Deskripsi task..."
+                  className="w-full resize-none rounded-xl border border-white/[0.07] bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-700 focus:border-indigo-500/50"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="Deadline"
+                  name="deadline"
+                  type="date"
+                  value={form.deadline}
+                  onChange={handleChange}
+                />
+                <Select
+                  label="Priority"
+                  name="priority"
+                  value={form.priority}
+                  onChange={handleChange}
+                  options={["Low", "Medium", "High"]}
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={closeForm}
+                  className="rounded-xl border border-white/[0.07] px-5 py-3 text-xs text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-xl bg-indigo-600 px-5 py-3 text-xs font-semibold hover:bg-indigo-500"
+                >
+                  {editingTodo ? "Save Changes" : "Create Task"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function Stat({
-  label,
-  value,
-  icon,
-}) {
+/* =========================
+   TODO CARD
+========================= */
+function TodoCard({ todo, projects, teams, onToggle, onEdit, onDelete }) {
+  const project = projects.find((p) => p.id === todo.projectId);
+  const team = teams.find((t) => t.id === todo.teamId);
+
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-4">
+    <div
+      className={`group rounded-2xl border border-white/[0.07] bg-white/[0.025] p-4 transition hover:border-indigo-500/20 ${
+        todo.completed ? "opacity-60" : ""
+      }`}
+    >
+      <div className="flex items-start gap-4">
+        {/* Checkbox */}
+        <button
+          onClick={() => onToggle(todo.id)}
+          className={`mt-1 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${
+            todo.completed
+              ? "border-indigo-500 bg-indigo-500"
+              : "border-white/[0.15] hover:border-white/[0.3]"
+          }`}
+        >
+          {todo.completed && (
+            <svg
+              className="h-3 w-3 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="3"
+            >
+              <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </button>
 
-      <div className="flex items-center justify-between">
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3
+              className={`text-sm font-semibold ${
+                todo.completed ? "line-through text-slate-600" : ""
+              }`}
+            >
+              {todo.title}
+            </h3>
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-600">
+              {todo.type === "personal" ? "👤 Personal" : `👥 ${team?.name || "Team"}`}
+            </span>
+            <PriorityBadge priority={todo.priority} />
+          </div>
 
-        <span className="text-[10px] font-bold tracking-[0.15em] text-slate-600">
-          {label}
-        </span>
+          {todo.description && (
+            <p className="mt-1 text-xs text-slate-600 line-clamp-1">
+              {todo.description}
+            </p>
+          )}
 
-        <span className="text-indigo-400">
-          {icon}
-        </span>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-slate-500">
+            {todo.deadline && (
+              <span>📅 {formatDate(todo.deadline)}</span>
+            )}
+            {project && <span>📁 {project.name}</span>}
+            {!project && <span>📁 No Project</span>}
+          </div>
+        </div>
 
+        {/* Actions */}
+        <div className="flex flex-shrink-0 gap-1">
+          <button
+            onClick={() => onEdit(todo)}
+            className="rounded-lg px-2 py-1 text-xs text-slate-500 transition hover:bg-indigo-500/10 hover:text-indigo-400"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => onDelete(todo.id)}
+            className="rounded-lg px-2 py-1 text-xs text-slate-500 transition hover:bg-red-500/10 hover:text-red-400"
+          >
+            Delete
+          </button>
+        </div>
       </div>
-
-      <p className="mt-3 text-2xl font-bold">
-        {value}
-      </p>
-
     </div>
   );
 }
 
-function EmptyState({
-  search,
-  filter,
-}) {
+/* =========================
+   SMALL COMPONENTS
+========================= */
+function Field({ label, name, value, onChange, placeholder, type = "text" }) {
   return (
-    <div className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.07]">
-
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-xl text-indigo-400">
-        ✓
-      </div>
-
-      <h3 className="mt-4 text-sm font-semibold">
-        {search || filter !== "All"
-          ? "Task tidak ditemukan"
-          : "Belum ada task"}
-      </h3>
-
-      <p className="mt-2 max-w-xs text-center text-xs leading-relaxed text-slate-700">
-        {search || filter !== "All"
-          ? "Coba ubah pencarian atau filter yang kamu gunakan."
-          : "Buat task pertama kamu menggunakan form di sebelah kiri."}
-      </p>
-
+    <div>
+      <label className="mb-2 block text-xs text-slate-400">{label}</label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full rounded-xl border border-white/[0.07] bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-700 focus:border-indigo-500/50"
+      />
     </div>
   );
+}
+
+function Select({ label, name, value, onChange, options, disabled = false }) {
+  return (
+    <div>
+      <label className="mb-2 block text-xs text-slate-400">{label}</label>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        className={`w-full rounded-xl border border-white/[0.07] bg-[#101522] px-4 py-3 text-sm text-slate-300 outline-none focus:border-indigo-500/50 ${
+          disabled ? "opacity-50 cursor-not-allowed" : ""
+        }`}
+      >
+        {options.map((opt) => {
+          if (typeof opt === "object" && opt.value !== undefined) {
+            return (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            );
+          }
+          return (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          );
+        })}
+      </select>
+    </div>
+  );
+}
+
+function PriorityBadge({ priority }) {
+  const styles = {
+    Low: "bg-emerald-500/10 text-emerald-400",
+    Medium: "bg-amber-500/10 text-amber-400",
+    High: "bg-red-500/10 text-red-400",
+  };
+  return (
+    <span
+      className={`rounded-full px-2 py-0.5 text-[8px] font-bold uppercase ${
+        styles[priority] || styles.Medium
+      }`}
+    >
+      {priority}
+    </span>
+  );
+}
+
+function formatDate(date) {
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(date));
 }
 
 export default Todo;

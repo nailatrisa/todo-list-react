@@ -131,6 +131,28 @@ function Icon({ name, size = 18, className = "", stroke = 2 }) {
           <path d="M21 12H9" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
+
+    // =========================================================
+    // TAMBAHAN: PROJECT MANAGEMENT & KANBAN BOARD
+    // =========================================================
+
+    case "Project":
+      return (
+        <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="7" width="20" height="14" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+
+    case "Kanban":
+      return (
+        <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="3" width="4" height="18" rx="0.5" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="10" y="3" width="4" height="14" rx="0.5" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="17" y="3" width="4" height="10" rx="0.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+
     default:
       return null;
   }
