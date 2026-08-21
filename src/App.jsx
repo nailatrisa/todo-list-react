@@ -1,4 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -19,20 +26,42 @@ import Analytics from "./pages/Analytics";
 
 import { STORAGE_KEYS } from "./utils/storage";
 
-function App() {
+// === OBJEK YANG ANDA BERIKAN ===
+const menuToPath = {
+  Dashboard: "/dashboard",
+  Todo: "/todo",
+  "Task Management": "/task-management",
+  "Project Management": "/project-management",
+  "My Tasks": "/my-tasks",
+  "Team Management": "/team-management",
+  Milestone: "/milestone",
+  Checklist: "/checklist",
+  Search: "/search",
+  "Role & Permission": "/roles",
+  Settings: "/settings",
+  "Kanban Board": "/kanban",
+  Calendar: "/calendar",
+  Notifications: "/notifications",
+  Analytics: "/analytics",
+};
+
+const pathToMenu = Object.fromEntries(
+  Object.entries(menuToPath).map(([menu, path]) => [path, menu])
+);
+// =================================
+
+// Komponen internal yang akan menggunakan hook routing
+function AppContent() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [user, setUser] = useState(() => {
     try {
       const savedUser =
         localStorage.getItem(STORAGE_KEYS.USER) ||
         sessionStorage.getItem(STORAGE_KEYS.USER);
-
-      if (!savedUser) {
-        return null;
-      }
-
-      return JSON.parse(savedUser);
-    } catch (error) {
-      console.error("Gagal membaca user:", error);
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
       return null;
     }
   });
@@ -41,8 +70,60 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Sinkronkan activeMenu dengan URL saat pertama kali atau saat URL berubah
+  useEffect(() => {
+    const path = location.pathname;
+    const menu = pathToMenu[path];
+    if (menu) {
+      setActiveMenu(menu);
+    } else {
+      // Jika path tidak dikenal, arahkan ke dashboard
+      navigate(menuToPath.Dashboard, { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
+  // Fungsi navigasi: ubah URL
+  const handleNavigate = (menu) => {
+    const path = menuToPath[menu];
+    if (path) {
+      navigate(path);
+      setActiveMenu(menu);
+      setSidebarOpen(false);
+    }
+  };
+
+  const handleSearch = (query) => {
+    const nextQuery = query?.trim() || "";
+    setSearchQuery(nextQuery);
+    if (nextQuery) {
+      navigate(menuToPath.Search);
+      setActiveMenu("Search");
+      setSidebarOpen(false);
+    }
+  };
+
+  const handleLogin = (loggedInUser) => {
+    setUser(loggedInUser);
+    navigate(menuToPath.Dashboard);
+    setActiveMenu("Dashboard");
+    setSidebarOpen(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    sessionStorage.removeItem(STORAGE_KEYS.USER);
+    setUser(null);
+    navigate("/login");
+  };
+
+  // Jika belum login, tampilkan Login (tanpa layout)
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  // Role-based access (sama seperti sebelumnya)
   const roleAccess = {
-    Admin: null, // full access
+    Admin: null,
     Manager: [
       "Dashboard",
       "Todo",
@@ -80,252 +161,50 @@ function App() {
     return allowed.includes(activeMenu) ? activeMenu : "Dashboard";
   })();
 
-  const handleLogin = (loggedInUser) => {
-    setUser(loggedInUser);
-    setActiveMenu("Dashboard");
-    setSidebarOpen(false);
+  // Props yang akan dikirim ke semua halaman
+  const commonProps = {
+    user,
+    onLogout: handleLogout,
+    onNavigate: handleNavigate,
+    onSearch: handleSearch,
+    searchQuery,
+    activeMenu: effectiveMenu,
+    sidebarOpen,
+    setSidebarOpen,
   };
 
-  const handleNavigate = (menu) => {
-    setActiveMenu(menu);
-    setSidebarOpen(false);
-  };
+  // Gunakan Routes untuk mapping path ke komponen
+  return (
+    <Routes>
+      <Route path="/login" element={<Login onLogin={handleLogin} />} />
+      <Route path="/dashboard" element={<Dashboard {...commonProps} />} />
+      <Route path="/todo" element={<Todo {...commonProps} />} />
+      <Route path="/task-management" element={<TaskManagement {...commonProps} />} />
+      <Route path="/project-management" element={<ProjectManagement {...commonProps} />} />
+      <Route path="/my-tasks" element={<MyTasks {...commonProps} />} />
+      <Route path="/team-management" element={<TeamManagement {...commonProps} />} />
+      <Route path="/milestone" element={<Milestone {...commonProps} />} />
+      <Route path="/checklist" element={<Checklist {...commonProps} />} />
+      <Route path="/search" element={<Search {...commonProps} />} />
+      <Route path="/roles" element={<Roles {...commonProps} />} />
+      <Route path="/settings" element={<Settings {...commonProps} />} />
+      <Route path="/kanban" element={<Kanban {...commonProps} />} />
+      <Route path="/calendar" element={<CalendarPage {...commonProps} />} />
+      <Route path="/notifications" element={<Notifications {...commonProps} />} />
+      <Route path="/analytics" element={<Analytics {...commonProps} />} />
+      {/* Default redirect */}
+      <Route path="*" element={<Dashboard {...commonProps} />} />
+    </Routes>
+  );
+}
 
-  const handleSearch = (query) => {
-    const nextQuery = query?.trim() || "";
-    setSearchQuery(nextQuery);
-
-    if (nextQuery) {
-      setActiveMenu("Search");
-      setSidebarOpen(false);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem(STORAGE_KEYS.USER);
-    sessionStorage.removeItem(STORAGE_KEYS.USER);
-
-    setUser(null);
-    setActiveMenu("Dashboard");
-    setSidebarOpen(false);
-  };
-
-  if (!user) {
-    return <Login onLogin={handleLogin} />;
-  }
-
-  switch (effectiveMenu) {
-    case "Todo":
-      return (
-        <Todo
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Task Management":
-      return (
-        <TaskManagement
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Project Management":
-      return (
-        <ProjectManagement
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "My Tasks":
-      return (
-        <MyTasks
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Team Management":
-      return (
-        <TeamManagement
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Milestone":
-      return (
-        <Milestone
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Checklist":
-      return (
-        <Checklist
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Search":
-      return (
-        <Search
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Role & Permission":
-      return (
-        <Roles
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Settings":
-      return (
-        <Settings
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Kanban Board":
-      return (
-        <Kanban
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Calendar":
-      return (
-        <CalendarPage
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Notifications":
-      return (
-        <Notifications
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Analytics":
-      return (
-        <Analytics
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-
-    case "Dashboard":
-    default:
-      return (
-        <Dashboard
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          searchQuery={searchQuery}
-          activeMenu={activeMenu}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      );
-  }
+// Komponen utama yang membungkus dengan BrowserRouter
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  );
 }
 
 export default App;
