@@ -1,7 +1,4 @@
-================================================================================
-                    PENJELASAN LENGKAP APLIKASI TODO-LIST-REACT
-                    (Task Management System dengan React + Vite)
-================================================================================
+PENJELASAN APLIKASI TODO-LIST-REACT
 
 📌 1. PENDAHULUAN
 Aplikasi ini adalah Task Management System (Sistem Manajemen Tugas) berbasis React.
